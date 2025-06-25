@@ -28,6 +28,6 @@ public:
     [[nodiscard]] Suit getSuit() const;
     void print() const;
     [[nodiscard]] int getPrimeValue() const;
-
+    std::string getName() const;
 };
 #endif //CARD_H

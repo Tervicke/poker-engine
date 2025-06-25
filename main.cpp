@@ -1,9 +1,4 @@
-#include <iostream>
-#include <random>
-#include <utility>
 #include <vector>
-#include<map>
-#include<cassert>
 #include<bits/stdc++.h>
 #include"card.h"
 #include"deck.h"
@@ -11,38 +6,82 @@
 #include"player.h"
 #include"game.h"
 #include<SFML/Graphics.hpp>
-void MonteCarloSimulate(Deck d , std::vector<Card> hand);
+#include<tinyxml2.h>
+using namespace tinyxml2;
+
+std::map<std::string,sf::IntRect> LoadCardRects(const std::string& filename)
+{
+    std::map<std::string,sf::IntRect> rects;
+    XMLDocument doc;
+    if (doc.LoadFile(filename.c_str()) != XML_SUCCESS)
+    {
+        std::cerr << "Failed to load the xml file " << filename  << std::endl;
+        return rects;
+    }
+    XMLElement* root = doc.FirstChildElement("Cards");
+    if (root == nullptr)
+    {
+        std::cerr << "Missed <Cards> element";
+        return rects;
+    }
+    for (XMLElement* sub = root->FirstChildElement("SubTexture"); sub != nullptr; sub = sub->NextSiblingElement("SubTexture"))
+    {
+        const char* name = sub->Attribute("name");
+        const int x = sub->IntAttribute("x");
+        const int y = sub->IntAttribute("y");
+        const int width = sub->IntAttribute("width");
+        const int height = sub->IntAttribute("height");
+        if (name)
+           rects[name]  = sf::IntRect(x,y,width,height);
+    }
+    return rects;
+}
+
 int main()
 {
-    /*
-    std::pair<Card,Card> p1holecards = {
-        Card(CLUB,8),
-        Card(SPADE,7),
-    };
-    std::pair<Card,Card> p2holecards = {
-        Card(CLUB,12),
-        Card(DIAMOND,6),
-    };
-    Player p1(p1holecards);
-    Player p2(p2holecards);
-    Game g(p1,p2);
-    g.RevealFlop();
-    g.RevealTurn();
-    g.RevealRiver();
-    g.PrintGameState();
-    g.monteCarloSimulate();
-    g.decideWinner();
-    */
-    sf::RenderWindow window(sf::VideoMode(800, 600), "Poker Engine");
-    while (window.isOpen()) {
+    Card c(HEART,6);
+    std::string xmlfile = "/home/tervicke/CLionProjects/poker/assets/cards.xml";
+    std::string spritefile = "/home/tervicke/CLionProjects/poker/assets/cards.png";
+    auto rects = LoadCardRects(xmlfile);
+    if (rects.find(c.getName()) == rects.end())
+    {
+        std::cerr << "Did not find the key" << std::endl;
+        return EXIT_FAILURE;
+    }
+    sf::Texture CardTexture;
+    if (!CardTexture.loadFromFile(spritefile))
+    {
+        std::cerr << "Failed to load card texture" << std::endl;
+        return EXIT_FAILURE;
+    }
+    std::cout << "Looking for: [" << c.getName() << "]\n";
+    for (auto& p : rects) {
+      //  std::cout << "Key in map: [" << p.first << "]\n";
+        if (p.first == c.getName()) {
+            std::cout << "MATCH FOUND!\n";
+        }
+    }
+    auto rect = rects[c.getName()];
+    std::cout << "Rect: (" << rect.left << ", " << rect.top << ", " << rect.width << ", " << rect.height << ")\n";
+    sf::Sprite card;
+    card.setTexture(CardTexture);
+    card.setTextureRect(rects[c.getName()]);
+    //card.setTextureRect(sf::IntRect(0, 0, 140, 190)); // SPADE2
+    card.setPosition(100,100);
+    sf::RenderWindow window(sf::VideoMode(800,800),"poker card");
+    while (window.isOpen())
+    {
         sf::Event event;
-        while (window.pollEvent(event)) {
+        while (window.pollEvent(event))
+        {
             if (event.type == sf::Event::Closed)
                 window.close();
         }
-        window.clear(sf::Color::White);
+        window.clear();
+        window.draw(card);
         window.display();
     }
+    return 0;
 }
 
 /*

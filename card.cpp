@@ -15,6 +15,17 @@ std::string getSuitAbbreviation(Suit suit) {
     default:      return "?";
     }
 }
+std::string getSuitName(Suit suit)
+{
+    switch (suit)
+    {
+        case SPADE:   return "SPADE";
+        case HEART:   return "HEART";
+        case DIAMOND: return "DIAMOND";
+        case CLUB:    return "CLUB";
+        default: return "?";
+    };
+}
 
 //prime map
 std::map<int, int> PrimeMap = {
@@ -67,4 +78,8 @@ void Card::print() const
 [[nodiscard]] int Card::getPrimeValue() const
 {
     return prime;
+}
+[[nodiscard]] std::string Card::getName() const
+{
+    return getSuitName(suit) + std::to_string(value);
 }
