@@ -338,28 +338,65 @@ void testEvaluateHand() {
     std::cout << "✅ ALL HAND RANK TESTS PASSED ✅" << std::endl;
 }
 */
-void setRotationsOnSprites(std::vector<std::vector<sf::Sprite>>& playerSprites , const int& cardWidth , const int& cardHeight , const int& spacing)
+void setRotationsOnSprites(std::vector<std::vector<sf::Sprite>>& playerSprites, const int& cardWidth, const int& cardHeight, const int& spacing)
 {
-    for (int i = 0; i < 2; ++i)
-        playerSprites[0][i].setPosition((WINDOW_WIDTH / 2 - cardWidth) + i * (cardWidth + spacing), WINDOW_HEIGHT - 160);
+    // Bottom (player 0)
+    {
+        float baseX = WINDOW_WIDTH / 2.0f;
+        float baseY = WINDOW_HEIGHT - 160.0f;
+        float angleStart = -10.0f;
+        float angleStep = 20.0f;
 
-    // Top
-    for (int i = 0; i < 2; ++i)
-        playerSprites[2][i].setPosition((WINDOW_WIDTH / 2 - cardWidth) + i * (cardWidth + spacing), 100);
-
-    // Right (rotated, vertically stacked)
-    for (int i = 0; i < 2; ++i) {
-        auto& sprite = playerSprites[1][i];
-        sprite.setRotation(90);
-        sprite.setOrigin(0, cardHeight); // flip pivot to top-left of rotated card
-        sprite.setPosition(WINDOW_WIDTH - 120, (WINDOW_HEIGHT / 2 - cardWidth) + i * (cardWidth + spacing));
+        for (int i = 0; i < 2; ++i) {
+            auto& sprite = playerSprites[0][i];
+            sprite.setOrigin(cardWidth / 2.0f, cardHeight / 2.0f);
+            sprite.setRotation(angleStart + i * angleStep);
+            sprite.setPosition(baseX + (i - 0.5f) * (cardWidth / 2.0f), baseY);
+        }
     }
 
-    // Left (rotated, vertically stacked)
-    for (int i = 0; i < 2; ++i) {
-        auto& sprite = playerSprites[3][i];
-        sprite.setRotation(90);
-        sprite.setOrigin(0, cardHeight);
-        sprite.setPosition(120, (WINDOW_HEIGHT / 2 - cardWidth) + i * (cardWidth + spacing));
+    // Right (player 1) – upright, fanned vertically
+    {
+        float baseX = WINDOW_WIDTH - 120.0f;
+        float baseY = WINDOW_HEIGHT / 2.0f;
+        float angleStart = -10.0f;
+        float angleStep = 20.0f;
+
+        for (int i = 0; i < 2; ++i) {
+            auto& sprite = playerSprites[1][i];
+            sprite.setOrigin(cardWidth / 2.0f, cardHeight / 2.0f);
+            sprite.setRotation(angleStart + i * angleStep);
+            sprite.setPosition(baseX, baseY + (i - 0.5f) * (cardHeight / 2.0f));
+        }
+    }
+
+    // Top (player 2)
+    {
+        float baseX = WINDOW_WIDTH / 2.0f;
+        float baseY = 100.0f;
+        float angleStart = 10.0f;
+        float angleStep = -20.0f;
+
+        for (int i = 0; i < 2; ++i) {
+            auto& sprite = playerSprites[2][i];
+            sprite.setOrigin(cardWidth / 2.0f, cardHeight / 2.0f);
+            sprite.setRotation(angleStart + i * angleStep);
+            sprite.setPosition(baseX + (i - 0.5f) * (cardWidth / 2.0f), baseY);
+        }
+    }
+
+    // Left (player 3) – upright, fanned vertically
+    {
+        float baseX = 120.0f;
+        float baseY = WINDOW_HEIGHT / 2.0f;
+        float angleStart = 10.0f;
+        float angleStep = -20.0f;
+
+        for (int i = 0; i < 2; ++i) {
+            auto& sprite = playerSprites[3][i];
+            sprite.setOrigin(cardWidth / 2.0f, cardHeight / 2.0f);
+            sprite.setRotation(angleStart + i * angleStep);
+            sprite.setPosition(baseX, baseY + (i - 0.5f) * (cardHeight / 2.0f));
+        }
     }
 }
