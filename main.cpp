@@ -34,56 +34,148 @@ std::map<std::string,sf::IntRect> LoadCardRects(const std::string& filename)
         if (name)
            rects[name]  = sf::IntRect(x,y,width,height);
     }
+//	<SubTexture name="cardBack_blue3.png" x="280" y="380" width="140" height="190"/>
+    rects["BACK"] = sf::IntRect(280,0,140,190);
     return rects;
 }
+const int WINDOW_WIDTH = 1024;
+const int WINDOW_HEIGHT = 768;
 
-int main()
-{
-    Card c(HEART,6);
+sf::Font loadFont() {
+    sf::Font font;
+    if (!font.loadFromFile("/home/tervicke/CLionProjects/poker/assets/yunan.ttf")) {
+        std::cerr << "Could not load font!\n";
+    }
+    return font;
+}
+int main() {
+    sf::RenderWindow window(sf::VideoMode(WINDOW_WIDTH, WINDOW_HEIGHT), "Poker Table");
+    window.setFramerateLimit(60);
+
+    sf::Font font = loadFont();
+
     std::string xmlfile = "/home/tervicke/CLionProjects/poker/assets/cards.xml";
     std::string spritefile = "/home/tervicke/CLionProjects/poker/assets/cards.png";
+    std::string backFile = "/home/tervicke/CLionProjects/poker/assets/backs.png";
     auto rects = LoadCardRects(xmlfile);
-    if (rects.find(c.getName()) == rects.end())
-    {
-        std::cerr << "Did not find the key" << std::endl;
-        return EXIT_FAILURE;
+
+    sf::Texture cardTexture;
+    if (!cardTexture.loadFromFile(spritefile)) {
+        std::cerr << "Failed to load card texture\n";
+        return 1;
     }
-    sf::Texture CardTexture;
-    if (!CardTexture.loadFromFile(spritefile))
+    
+    sf::Texture backTexture;
+    if (!backTexture.loadFromFile(backFile))
     {
-        std::cerr << "Failed to load card texture" << std::endl;
-        return EXIT_FAILURE;
+        std::cerr << "Failed to load card texture\n";
+        return 1;
     }
-    std::cout << "Looking for: [" << c.getName() << "]\n";
-    for (auto& p : rects) {
-      //  std::cout << "Key in map: [" << p.first << "]\n";
-        if (p.first == c.getName()) {
-            std::cout << "MATCH FOUND!\n";
+    std::vector<std::vector<std::string>> playerHands = {
+        {"HEART1", "CLUB2"},       // Bottom (you)
+        {"BACK", "BACK"},    // Right (rotated)
+        {"BACK", "BACK"},      // Top
+        {"BACK", "BACK"}    // Left (rotated)
+    };
+
+    std::vector<std::vector<sf::Sprite>> playerSprites(4);
+    for (int i = 0; i < 4; ++i) {
+        for (const std::string& name : playerHands[i]) {
+            if (name == "BACK")
+            {
+                sf::Sprite sprite(backTexture, rects[name]);
+                sprite.setScale(0.7f, 0.7f);
+                playerSprites[i].push_back(sprite);
+            }else
+            {
+                sf::Sprite sprite(cardTexture, rects[name]);
+                sprite.setScale(0.7f, 0.7f);
+                playerSprites[i].push_back(sprite);
+            }
         }
     }
-    auto rect = rects[c.getName()];
-    std::cout << "Rect: (" << rect.left << ", " << rect.top << ", " << rect.width << ", " << rect.height << ")\n";
-    sf::Sprite card;
-    card.setTexture(CardTexture);
-    card.setTextureRect(rects[c.getName()]);
-    //card.setTextureRect(sf::IntRect(0, 0, 140, 190)); // SPADE2
-    card.setPosition(100,100);
-    sf::RenderWindow window(sf::VideoMode(800,800),"poker card");
-    while (window.isOpen())
-    {
+
+    float cardWidth = 140 * 0.7f;
+    float cardHeight = 190 * 0.7f;
+    float spacing = 20.f;
+
+    // Bottom (you)
+    for (int i = 0; i < 2; ++i)
+        playerSprites[0][i].setPosition((WINDOW_WIDTH / 2 - cardWidth) + i * (cardWidth + spacing), WINDOW_HEIGHT - 160);
+
+    // Top
+    for (int i = 0; i < 2; ++i)
+        playerSprites[2][i].setPosition((WINDOW_WIDTH / 2 - cardWidth) + i * (cardWidth + spacing), 100);
+
+    // Right (rotated, vertically stacked)
+    for (int i = 0; i < 2; ++i) {
+        auto& sprite = playerSprites[1][i];
+        sprite.setRotation(90);
+        sprite.setOrigin(0, cardHeight); // flip pivot to top-left of rotated card
+        sprite.setPosition(WINDOW_WIDTH - 120, (WINDOW_HEIGHT / 2 - cardWidth) + i * (cardWidth + spacing));
+    }
+
+    // Left (rotated, vertically stacked)
+    for (int i = 0; i < 2; ++i) {
+        auto& sprite = playerSprites[3][i];
+        sprite.setRotation(90);
+        sprite.setOrigin(0, cardHeight);
+        sprite.setPosition(120, (WINDOW_HEIGHT / 2 - cardWidth) + i * (cardWidth + spacing));
+    }
+
+    std::vector<std::string> communityCardNames = {
+        "HEART8", "CLUB4", "SPADE7", "DIAMOND2", "CLUB13"
+    };
+
+    std::vector<sf::Sprite> communityCards;
+
+    for (const std::string& name : communityCardNames) {
+        sf::Sprite sprite(cardTexture, rects[name]);
+        sprite.setScale(0.6f, 0.6f);
+        communityCards.push_back(sprite);
+    }
+
+    float totalWidth = 5 * cardWidth + 4 * spacing;
+    float startX = (WINDOW_WIDTH - totalWidth) / 2 + 20;
+    float y = WINDOW_HEIGHT / 2 - cardHeight / 2;
+
+    for (int i = 0; i < communityCards.size(); ++i) {
+        communityCards[i].setPosition(startX + i * (cardWidth + spacing), y);
+    }
+
+    // Win / Loss Text
+    sf::Text winText("Win 54.3%", font, 24);
+    winText.setFillColor(sf::Color::White);
+    winText.setPosition(20, 20);
+
+    sf::Text lossText("Loss 45.7%", font, 24);
+    lossText.setFillColor(sf::Color::White);
+    lossText.setPosition(20, 60);
+
+    while (window.isOpen()) {
         sf::Event event;
-        while (window.pollEvent(event))
-        {
+        while (window.pollEvent(event)) {
             if (event.type == sf::Event::Closed)
                 window.close();
         }
-        window.clear();
-        window.draw(card);
+
+        window.clear(sf::Color(0, 100, 0)); // green background
+
+        window.draw(winText);
+        window.draw(lossText);
+
+        for (const auto& hand : playerSprites)
+            for (const auto& card : hand)
+                window.draw(card);
+
+        for (auto& card : communityCards)
+            window.draw(card);
+
         window.display();
     }
+
     return 0;
 }
-
 /*
 void testEvaluateHand() {
     // High Card
