@@ -6,12 +6,9 @@
 #include "handrank.h"
 #include "player.h"
 #include "game.h"
-Game::Game(Player p1, Player p2, Player p3, Player p4)
+Game::Game(std::vector<Player> players)
     : deck(),
-      p1(std::move(p1)),
-      p2(std::move(p2)),
-      p3(std::move(p3)),
-      p4(std::move(p4)),
+      players(players),
       flopRevealed(false),
       turn(Card()),
       turnRevealed(false),
@@ -20,11 +17,12 @@ Game::Game(Player p1, Player p2, Player p3, Player p4)
 {}
 bool Game::DistributeHoleCards()
 {
-    auto holecard1 = deck.drawCards(2);
-    auto holecard2 = deck.drawCards(2);
-    if ( holecard1.size() < 2 || holecard2.size() < 2 ) return false;
-    p1.setHoleCards( {holecard1[0] , holecard1[1]});
-    p2.setHoleCards( {holecard2[0] , holecard2[1]});
+    for (auto& player : players)
+    {
+        auto holecards = deck.drawCards(2);
+        if ( holecards.size() < 2 ) return false;
+        player.setHoleCards( {holecards[0] , holecards[1]});
+    }
     return true;
 }
 bool Game::RevealFlop()
@@ -77,8 +75,8 @@ void Game::PrintGameState() {
 
     std::cout << "\n==================== GAME STATE ====================\n";
 
-    printPlayerCards("PLAYER 1", p1);
-    printPlayerCards("PLAYER 2", p2);
+    //printPlayerCards("PLAYER 1", p1);
+    //printPlayerCards("PLAYER 2", p2);
 
     if (flopRevealed)
         printCardSection("FLOP: ", flop);
@@ -161,14 +159,14 @@ void Game::decideWinner()
 {
     auto comcards = getCommunityCards();
     std::vector<Card> allcards = comcards;
-    allcards.insert(allcards.end(), p1.getHoleCards().first);
-    allcards.insert(allcards.end(), p1.getHoleCards().second);
+    //allcards.insert(allcards.end(), p1.getHoleCards().first);
+    //allcards.insert(allcards.end(), p1.getHoleCards().second);
     HandRank bestp1  = getBestHand(getAll5CardCombos(allcards));
     //remove the last 2 p1 cards
     allcards.pop_back();
     allcards.pop_back();
-    allcards.push_back(p2.getHoleCards().first);
-    allcards.push_back(p2.getHoleCards().second);
+    //allcards.push_back(p2.getHoleCards().first);
+    //allcards.push_back(p2.getHoleCards().second);
     HandRank bestp2 = getBestHand(getAll5CardCombos(allcards));
     if (bestp1 < bestp2)
     {
@@ -191,8 +189,8 @@ void Game::monteCarloSimulate()
     //assume hands can already be made without needing to add more cards
     if (getCommunityCards().size() == 5)
     {
-        cards.push_back(p1.getHoleCards().first);
-        cards.push_back(p1.getHoleCards().second);
+        //cards.push_back(p1.getHoleCards().first);
+        //cards.push_back(p1.getHoleCards().second);
         HandRank best = getBestHand(getAll5CardCombos(cards));
 
         //remove the p1 hole cards
@@ -240,6 +238,13 @@ void Game::monteCarloSimulate()
 std::pair<bool,std::string> Game::RevealNext()
 {
     if (stop) return{false,""};
+    if (!CardsDistributed)
+    {
+        DistributeHoleCards();
+        CardsDistributed  = true;
+        stop = true;
+        return {true,"HOLE"};
+    }
     if (!flopRevealed)
     {
         RevealFlop();
@@ -276,4 +281,13 @@ std::string Game::GetRiverName() const
 std::string Game::GetTurnName() const
 {
     return turn.getName();
+}
+
+std::vector<std::string> Game::GetPlayer1Cards()
+{
+    auto cards = players[0].getHoleCards();
+    std::cout << cards.first.getName() << std::endl;
+    std::cout << cards.second.getName() << std::endl;
+    std::vector<std::string> names = {players[0].getHoleCards().first .getName() , players[0].getHoleCards().second.getName()};
+    return names;
 }

@@ -13,19 +13,17 @@ class Game
 {
 private:
     Deck deck;
-    Player p1;
-    Player p2;
-    Player p3;
-    Player p4;
+    std::vector<Player> players;
     std::vector<Card> flop = std::vector(3 , Card() );
     bool flopRevealed = false;
     Card turn;
     bool turnRevealed = false;
     Card river;
+    bool CardsDistributed = false;
     bool riverRevealed = false;
 public:
     bool stop = true;
-    Game(Player  p1, Player p2, Player p3, Player p4);
+    Game(std::vector<Player> players);
     bool DistributeHoleCards();
     bool RevealFlop();
     bool RevealTurn();
@@ -43,6 +41,8 @@ public:
     std::pair<bool,std::string> RevealNext();
     std::vector<std::string> GetFlopName() const;
     std::string GetTurnName() const;
+    std::vector<std::string> GetPlayer1Cards();
     std::string GetRiverName() const;
+    std::vector<std::string> GetPlayerCards();
 };
 #endif //GAME_H

@@ -9,6 +9,8 @@
 #include<tinyxml2.h>
 using namespace tinyxml2;
 
+void setRotationsOnSprites(std::vector<std::vector<sf::Sprite>>& playerSprites , const int& cardWidth , const int& cardHeight , const int& spacing);
+
 std::map<std::string,sf::IntRect> LoadCardRects(const std::string& filename)
 {
     std::map<std::string,sf::IntRect> rects;
@@ -64,12 +66,13 @@ int main() {
         std::cerr << "Failed to load card texture\n";
         return 1;
     }
-    Player p1;
-    Player p2;
-    Player p3;
-    Player p4;
-    Game g(p1,p2 , p3 , p4);
-
+    std::vector<Player> players;
+    for (int i = 0 ; i < 4 ; i++)
+    {
+        Player p;
+        players.push_back(p);
+    }
+    Game g(players);
 
     sf::Texture backTexture;
     if (!backTexture.loadFromFile(backFile))
@@ -77,14 +80,17 @@ int main() {
         std::cerr << "Failed to load card texture\n";
         return 1;
     }
+    /*
     std::vector<std::vector<std::string>> playerHands = {
-        {"HEART1", "CLUB2"},       // Bottom (you)
+        {"BACK", "BACK"},       // Bottom (you)
         {"BACK", "BACK"},    // Right (rotated)
         {"BACK", "BACK"},      // Top
         {"BACK", "BACK"}    // Left (rotated)
     };
+    */
 
     std::vector<std::vector<sf::Sprite>> playerSprites(4);
+    /*
     for (int i = 0; i < 4; ++i) {
         for (const std::string& name : playerHands[i]) {
             if (name == "BACK")
@@ -100,34 +106,12 @@ int main() {
             }
         }
     }
+    */
+
 
     float cardWidth = 140 * 0.7f;
     float cardHeight = 190 * 0.7f;
     float spacing = 20.f;
-
-    // Bottom (you)
-    for (int i = 0; i < 2; ++i)
-        playerSprites[0][i].setPosition((WINDOW_WIDTH / 2 - cardWidth) + i * (cardWidth + spacing), WINDOW_HEIGHT - 160);
-
-    // Top
-    for (int i = 0; i < 2; ++i)
-        playerSprites[2][i].setPosition((WINDOW_WIDTH / 2 - cardWidth) + i * (cardWidth + spacing), 100);
-
-    // Right (rotated, vertically stacked)
-    for (int i = 0; i < 2; ++i) {
-        auto& sprite = playerSprites[1][i];
-        sprite.setRotation(90);
-        sprite.setOrigin(0, cardHeight); // flip pivot to top-left of rotated card
-        sprite.setPosition(WINDOW_WIDTH - 120, (WINDOW_HEIGHT / 2 - cardWidth) + i * (cardWidth + spacing));
-    }
-
-    // Left (rotated, vertically stacked)
-    for (int i = 0; i < 2; ++i) {
-        auto& sprite = playerSprites[3][i];
-        sprite.setRotation(90);
-        sprite.setOrigin(0, cardHeight);
-        sprite.setPosition(120, (WINDOW_HEIGHT / 2 - cardWidth) + i * (cardWidth + spacing));
-    }
 
     std::vector<std::string> communityCardNames = {
 //        "BACK", "BACK", "BACK", "BACK", "BACK"
@@ -144,8 +128,6 @@ int main() {
     float totalWidth = 5 * cardWidth + 4 * spacing;
     float startX = (WINDOW_WIDTH - totalWidth) / 2 + 20;
     float y = WINDOW_HEIGHT / 2 - cardHeight / 2;
-
-
 
     // Win / Loss Text
     sf::Text winText("Win 54.3%", font, 24);
@@ -170,7 +152,39 @@ int main() {
         if (auto [revealed , type] = g.RevealNext(); revealed){
             std::cout << "here" << std::endl;
             std::cout << type << std::endl;
-            if (type == "FLOP")
+            if (type == "HOLE")
+            {
+
+
+                auto player1cardnames = g.GetPlayer1Cards();
+
+                for (int i = 0; i < 4; ++i)
+                    playerSprites[i].clear();
+
+                for (int i = 0; i < 4; ++i) {
+                    if (i != 0)
+                    {
+                        for (int j = 0 ; j < 2 ; j++)
+                        {
+                            sf::Sprite sprite(backTexture, rects["BACK"]); //BACK returns the back texture
+                            sprite.setScale(0.7f, 0.7f);
+                            playerSprites[i].push_back(sprite);
+                        }
+                    }
+                    else
+                    {
+                        for (const auto& name : player1cardnames)
+                        {
+                            std::cout << name << std::endl;
+                            sf::Sprite sprite(cardTexture, rects[name]);
+                            sprite.setScale(0.7f, 0.7f);
+                            playerSprites[i].push_back(sprite);
+                        }
+                    }
+                }
+                setRotationsOnSprites(playerSprites , cardWidth , cardHeight , spacing);
+            }
+            else if (type == "FLOP")
             {
                 auto names = g.GetFlopName();
                 for (int i = 0 ; i < 3 ; i++)
@@ -199,8 +213,12 @@ int main() {
         window.draw(lossText);
 
         for (const auto& hand : playerSprites)
+        {
             for (const auto& card : hand)
+            {
                 window.draw(card);
+            }
+        }
 
         for (auto& sprite: communityCards)
         {
@@ -330,3 +348,28 @@ void testHandRankComparison() {
     std::cout << "All hand comparisons passed.\n";
 }
 */
+void setRotationsOnSprites(std::vector<std::vector<sf::Sprite>>& playerSprites , const int& cardWidth , const int& cardHeight , const int& spacing)
+{
+    for (int i = 0; i < 2; ++i)
+        playerSprites[0][i].setPosition((WINDOW_WIDTH / 2 - cardWidth) + i * (cardWidth + spacing), WINDOW_HEIGHT - 160);
+
+    // Top
+    for (int i = 0; i < 2; ++i)
+        playerSprites[2][i].setPosition((WINDOW_WIDTH / 2 - cardWidth) + i * (cardWidth + spacing), 100);
+
+    // Right (rotated, vertically stacked)
+    for (int i = 0; i < 2; ++i) {
+        auto& sprite = playerSprites[1][i];
+        sprite.setRotation(90);
+        sprite.setOrigin(0, cardHeight); // flip pivot to top-left of rotated card
+        sprite.setPosition(WINDOW_WIDTH - 120, (WINDOW_HEIGHT / 2 - cardWidth) + i * (cardWidth + spacing));
+    }
+
+    // Left (rotated, vertically stacked)
+    for (int i = 0; i < 2; ++i) {
+        auto& sprite = playerSprites[3][i];
+        sprite.setRotation(90);
+        sprite.setOrigin(0, cardHeight);
+        sprite.setPosition(120, (WINDOW_HEIGHT / 2 - cardWidth) + i * (cardWidth + spacing));
+    }
+}
