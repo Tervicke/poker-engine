@@ -64,7 +64,13 @@ int main() {
         std::cerr << "Failed to load card texture\n";
         return 1;
     }
-    
+    Player p1;
+    Player p2;
+    Player p3;
+    Player p4;
+    Game g(p1,p2 , p3 , p4);
+
+
     sf::Texture backTexture;
     if (!backTexture.loadFromFile(backFile))
     {
@@ -124,7 +130,7 @@ int main() {
     }
 
     std::vector<std::string> communityCardNames = {
-        "HEART8", "CLUB4", "SPADE7", "DIAMOND2", "CLUB13"
+//        "BACK", "BACK", "BACK", "BACK", "BACK"
     };
 
     std::vector<sf::Sprite> communityCards;
@@ -139,9 +145,7 @@ int main() {
     float startX = (WINDOW_WIDTH - totalWidth) / 2 + 20;
     float y = WINDOW_HEIGHT / 2 - cardHeight / 2;
 
-    for (int i = 0; i < communityCards.size(); ++i) {
-        communityCards[i].setPosition(startX + i * (cardWidth + spacing), y);
-    }
+
 
     // Win / Loss Text
     sf::Text winText("Win 54.3%", font, 24);
@@ -153,12 +157,42 @@ int main() {
     lossText.setPosition(20, 60);
 
     while (window.isOpen()) {
+        //exit logic
         sf::Event event;
         while (window.pollEvent(event)) {
             if (event.type == sf::Event::Closed)
                 window.close();
+            if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Space)
+            {
+                g.stop = !g.stop;
+            }
         }
-
+        if (auto [revealed , type] = g.RevealNext(); revealed){
+            std::cout << "here" << std::endl;
+            std::cout << type << std::endl;
+            if (type == "FLOP")
+            {
+                auto names = g.GetFlopName();
+                for (int i = 0 ; i < 3 ; i++)
+                {
+                    sf::Sprite sprite(cardTexture, rects[names[i]]);
+                    communityCards.push_back(sprite);
+                }
+            }
+            else if (type == "TURN"){
+                sf::Sprite sprite(cardTexture, rects[g.GetTurnName()]);
+                communityCards.push_back(sprite);
+            }else
+            {
+                sf::Sprite sprite(cardTexture, rects[g.GetRiverName()]);
+                communityCards.push_back(sprite);
+            }
+            //update position for community cards
+            for (int i = 0; i < communityCards.size(); ++i) {
+                communityCards[i].setScale(0.7f,0.7f);
+                communityCards[i].setPosition(startX + i * (cardWidth + spacing), y);
+            }
+        }
         window.clear(sf::Color(0, 100, 0)); // green background
 
         window.draw(winText);
@@ -168,8 +202,10 @@ int main() {
             for (const auto& card : hand)
                 window.draw(card);
 
-        for (auto& card : communityCards)
-            window.draw(card);
+        for (auto& sprite: communityCards)
+        {
+            window.draw(sprite);
+        }
 
         window.display();
     }

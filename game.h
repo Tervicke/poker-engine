@@ -15,6 +15,8 @@ private:
     Deck deck;
     Player p1;
     Player p2;
+    Player p3;
+    Player p4;
     std::vector<Card> flop = std::vector(3 , Card() );
     bool flopRevealed = false;
     Card turn;
@@ -22,7 +24,8 @@ private:
     Card river;
     bool riverRevealed = false;
 public:
-    Game(Player  p1 , Player  p2);
+    bool stop = true;
+    Game(Player  p1, Player p2, Player p3, Player p4);
     bool DistributeHoleCards();
     bool RevealFlop();
     bool RevealTurn();
@@ -37,5 +40,9 @@ public:
     void decideWinner();
     Deck getDeck() ;
     void monteCarloSimulate();
+    std::pair<bool,std::string> RevealNext();
+    std::vector<std::string> GetFlopName() const;
+    std::string GetTurnName() const;
+    std::string GetRiverName() const;
 };
 #endif //GAME_H

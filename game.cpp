@@ -6,10 +6,18 @@
 #include "handrank.h"
 #include "player.h"
 #include "game.h"
-Game::Game(Player  p1 , Player  p2)
-    : deck() , p1(std::move(p1)) , p2(std::move(p2)) ,  flopRevealed ( false ) , turn ( Card() ) , turnRevealed( false )  , river( Card() ) , riverRevealed( false )
-{
-}
+Game::Game(Player p1, Player p2, Player p3, Player p4)
+    : deck(),
+      p1(std::move(p1)),
+      p2(std::move(p2)),
+      p3(std::move(p3)),
+      p4(std::move(p4)),
+      flopRevealed(false),
+      turn(Card()),
+      turnRevealed(false),
+      river(Card()),
+      riverRevealed(false)
+{}
 bool Game::DistributeHoleCards()
 {
     auto holecard1 = deck.drawCards(2);
@@ -228,4 +236,44 @@ void Game::monteCarloSimulate()
         std::cout << "WIN: " << (100.0 * win / trials) << "%" << "\n";
         std::cout << "LOSS: " << (100.0 * loss / trials) <<"%" << '\n';
     }
+}
+std::pair<bool,std::string> Game::RevealNext()
+{
+    if (stop) return{false,""};
+    if (!flopRevealed)
+    {
+        RevealFlop();
+        stop = true;
+        return {true , "FLOP"};
+    }
+    if (!turnRevealed)
+    {
+        RevealTurn();
+        stop = true;
+        return {true,"TURN"};
+    }
+    if (!riverRevealed)
+    {
+        RevealRiver();
+        stop = true;
+        return {true,"RIVER"};
+    }
+    return {false,""};
+}
+std::vector<std::string> Game::GetFlopName() const
+{
+    std::vector<std::string> names;
+    for (int i = 0 ; i < 3 ; i++)
+    {
+        names.push_back(flop[i].getName());
+    }
+    return names;
+}
+std::string Game::GetRiverName() const
+{
+    return river.getName();
+}
+std::string Game::GetTurnName() const
+{
+    return turn.getName();
 }
