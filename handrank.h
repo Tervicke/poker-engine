@@ -25,6 +25,7 @@ public:
     HandRank(Hand hand , std::vector<Card> kickers);
     Hand getHand();
     bool operator<(const HandRank& other) const;
+    static void testHandRankComparison();
 };
 
 //some util function

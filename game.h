@@ -37,12 +37,14 @@ public:
     HandRank getBestHand(std::vector<std::vector<Card>> combos);
     void decideWinner();
     Deck getDeck() ;
-    void monteCarloSimulate();
+    std::pair<double,double> monteCarloSimulate();
     std::pair<bool,std::string> RevealNext();
     std::vector<std::string> GetFlopName() const;
     std::string GetTurnName() const;
     std::vector<std::string> GetPlayer1Cards();
     std::string GetRiverName() const;
-    std::vector<std::string> GetPlayerCards();
+    std::pair<std::string,std::string> getProbabilityPercentage();
+    std::vector<std::vector<std::string>> GetAllplayersCards();
+    HandRank getBestPlayerHand();
 };
 #endif //GAME_H

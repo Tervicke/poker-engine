@@ -4,6 +4,11 @@
 #include "handrank.h"
 #include "card.h"
 #include<bits/stdc++.h>
+
+
+HandRank getBestHand(const std::vector<std::vector<Card>>& combos) ;
+std::vector<std::vector<Card>> getAll5CardCombos(const std::vector<Card>& cards);
+
 HandRank::HandRank(Hand hand , std::vector<Card> kickers)
 : hand(hand) , kickers(kickers)
 {}
@@ -154,4 +159,91 @@ std::string toHandString(const Hand hand ) {
     case ROYAL_FLUSH:      return "Royal Flush";
     default:               return "Unknown Hand";
     }
+}
+void HandRank::testHandRankComparison() {
+    std::vector<std::pair<std::string, std::vector<Card>>> hands = {
+        {
+            "Royal Flush",
+            {Card(SPADE, 10), Card(SPADE, 11), Card(SPADE, 12), Card(SPADE, 13), Card(SPADE, 14), Card(CLUB, 3), Card(DIAMOND, 5)}
+        },
+        {
+            "One Pair (Aces)",
+            {Card(CLUB, 14), Card(DIAMOND, 14), Card(HEART, 5), Card(SPADE, 7), Card(CLUB, 9), Card(HEART, 2), Card(DIAMOND, 3)}
+        },
+        {
+            "Two Pair (Kings and Tens)",
+            {Card(CLUB, 13), Card(DIAMOND, 13), Card(HEART, 10), Card(SPADE, 10), Card(HEART, 2), Card(SPADE, 3), Card(CLUB, 6)}
+        },
+        {
+            "Straight",
+            {Card(CLUB, 5), Card(DIAMOND, 6), Card(HEART, 7), Card(SPADE, 8), Card(HEART, 9), Card(DIAMOND, 2), Card(CLUB, 11)}
+        },
+        {
+            "High Card",
+            {Card(SPADE, 2), Card(DIAMOND, 5), Card(CLUB, 9), Card(HEART, 11), Card(CLUB, 13), Card(DIAMOND, 4), Card(HEART, 3)}
+        }
+    };
+
+    // Evaluate each hand from 7 cards
+    std::vector<std::pair<HandRank, std::string>> evaluated;
+    for (const auto& [name, cards] : hands) {
+        auto allCombos = getAll5CardCombos(cards); // returns vector<vector<Card>> of 21 combinations
+        HandRank rank = getBestHand(allCombos);
+        evaluated.emplace_back(rank, name);
+    }
+
+    // Sort by strength
+    std::sort(evaluated.begin(), evaluated.end());
+
+    std::cout << "Sorted hands from weakest to strongest:\n";
+    for (auto& [rank, name] : evaluated) {
+        std::cout << toHandString(rank.getHand()) << " => " << name << "\n";
+    }
+
+    // Assert Royal Flush is strongest
+    assert(evaluated.back().second == "Royal Flush");
+
+    // Assert High Card is weakest
+    assert(evaluated.front().second == "High Card");
+
+    std::cout << "All hand comparisons passed.\n";
+}
+
+std::vector<std::vector<Card>> getAll5CardCombos(const std::vector<Card>& cards) {
+    std::vector<std::vector<Card>> combos;
+
+    // Should always be 7
+    assert(cards.size() == 7);
+
+    // Generate all 5-card combinations from 7 cards
+    std::vector<int> indices(7);
+    std::iota(indices.begin(), indices.end(), 0);
+
+    // Generate combinations using 3 nested loops (easier than std::next_permutation here)
+    for (int i = 0; i < 7; ++i) {
+        for (int j = i + 1; j < 7; ++j) {
+            // Skip two indices (i and j) to leave 5 remaining
+            std::vector<Card> combo;
+            for (int k = 0; k < 7; ++k) {
+                if (k != i && k != j) {
+                    combo.push_back(cards[k]);
+                }
+            }
+            combos.push_back(combo);
+        }
+    }
+
+    return combos;
+}
+HandRank getBestHand(const std::vector<std::vector<Card>>& combos) {
+    assert(!combos.empty());
+
+    HandRank best = EvaluateHand(combos[0]);
+    for (size_t i = 1; i < combos.size(); ++i) {
+        HandRank current = EvaluateHand(combos[i]);
+        if (best < current) {
+            best = current;
+        }
+    }
+    return best;
 }

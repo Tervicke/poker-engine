@@ -45,12 +45,13 @@ const int WINDOW_HEIGHT = 768;
 
 sf::Font loadFont() {
     sf::Font font;
-    if (!font.loadFromFile("/home/tervicke/CLionProjects/poker/assets/yunan.ttf")) {
+    if (!font.loadFromFile("/home/tervicke/CLionProjects/poker/assets/arial.ttf")) {
         std::cerr << "Could not load font!\n";
     }
     return font;
 }
 int main() {
+    HandRank::testHandRankComparison();
     sf::RenderWindow window(sf::VideoMode(WINDOW_WIDTH, WINDOW_HEIGHT), "Poker Table");
     window.setFramerateLimit(60);
 
@@ -130,13 +131,18 @@ int main() {
     float y = WINDOW_HEIGHT / 2 - cardHeight / 2;
 
     // Win / Loss Text
-    sf::Text winText("Win 54.3%", font, 24);
+    sf::Text winText("Win 0%", font, 24);
     winText.setFillColor(sf::Color::White);
     winText.setPosition(20, 20);
 
-    sf::Text lossText("Loss 45.7%", font, 24);
+    sf::Text lossText("Loss 0%", font, 24);
     lossText.setFillColor(sf::Color::White);
     lossText.setPosition(20, 60);
+
+    //set probality
+    auto [winpercent , losspercent] = g.getProbabilityPercentage();
+    winText.setString("WIN: "+winpercent+" %");
+    lossText.setString("LOSS: "+losspercent + " %");
 
     while (window.isOpen()) {
         //exit logic
@@ -150,12 +156,8 @@ int main() {
             }
         }
         if (auto [revealed , type] = g.RevealNext(); revealed){
-            std::cout << "here" << std::endl;
-            std::cout << type << std::endl;
             if (type == "HOLE")
             {
-
-
                 auto player1cardnames = g.GetPlayer1Cards();
 
                 for (int i = 0; i < 4; ++i)
@@ -183,6 +185,10 @@ int main() {
                     }
                 }
                 setRotationsOnSprites(playerSprites , cardWidth , cardHeight , spacing);
+
+                auto [winpercent , losspercent] = g.getProbabilityPercentage();
+                winText.setString("WIN: "+winpercent+" %");
+                lossText.setString("LOSS: "+losspercent + " %");
             }
             else if (type == "FLOP")
             {
@@ -192,14 +198,44 @@ int main() {
                     sf::Sprite sprite(cardTexture, rects[names[i]]);
                     communityCards.push_back(sprite);
                 }
+                auto [winpercent , losspercent] = g.getProbabilityPercentage();
+                winText.setString("WIN: "+winpercent+" %");
+                lossText.setString("LOSS: "+losspercent + " %");
             }
             else if (type == "TURN"){
                 sf::Sprite sprite(cardTexture, rects[g.GetTurnName()]);
                 communityCards.push_back(sprite);
-            }else
+
+                auto [winpercent , losspercent] = g.getProbabilityPercentage();
+                winText.setString("WIN: "+winpercent+" %");
+                lossText.setString("LOSS: "+losspercent + " %");
+            }else if (type == "RIVER")
             {
                 sf::Sprite sprite(cardTexture, rects[g.GetRiverName()]);
                 communityCards.push_back(sprite);
+
+                auto [winpercent , losspercent] = g.getProbabilityPercentage();
+                winText.setString("WIN: "+winpercent+" %");
+                lossText.setString("LOSS: "+losspercent + " %");
+            }
+            else if (type == "END")
+            {
+                auto names = g.GetAllplayersCards();
+                playerSprites.clear();
+                for (int i = 0; i < 4; ++i)
+                {
+                    playerSprites.push_back({});
+                    for (auto name : names[i])
+                    {
+                        sf::Sprite sprite(cardTexture, rects[name]);
+                        sprite.setScale(0.7f, 0.7f);
+                        sprite.setPosition(startX + i * (cardWidth + spacing), y);
+                        playerSprites[i].push_back(sprite);
+                    }
+                }
+                setRotationsOnSprites(playerSprites , cardWidth , cardHeight , spacing);
+                auto userhand = g.getBestPlayerHand();
+                std::cout << toHandString(userhand.getHand()) << std::endl;
             }
             //update position for community cards
             for (int i = 0; i < communityCards.size(); ++i) {
@@ -208,6 +244,7 @@ int main() {
             }
         }
         window.clear(sf::Color(0, 100, 0)); // green background
+
 
         window.draw(winText);
         window.draw(lossText);
@@ -299,53 +336,6 @@ void testEvaluateHand() {
     assert(EvaluateHand(royalFlush).getHand() == ROYAL_FLUSH);
 
     std::cout << "✅ ALL HAND RANK TESTS PASSED ✅" << std::endl;
-}
-void testHandRankComparison() {
-    std::vector<std::pair<std::string, std::vector<Card>>> hands = {
-        {
-            "Royal Flush",
-            {Card(SPADE, 10), Card(SPADE, 11), Card(SPADE, 12), Card(SPADE, 13), Card(SPADE, 14)}
-        },
-        {
-            "One Pair (Aces)",
-            {Card(CLUB, 14), Card(DIAMOND, 14), Card(HEART, 5), Card(SPADE, 7), Card(CLUB, 9)}
-        },
-        {
-            "Two Pair (Kings and Tens)",
-            {Card(CLUB, 13), Card(DIAMOND, 13), Card(HEART, 10), Card(SPADE, 10), Card(HEART, 2)}
-        },
-        {
-            "Straight",
-            {Card(CLUB, 5), Card(DIAMOND, 6), Card(HEART, 7), Card(SPADE, 8), Card(HEART, 9)}
-        },
-        {
-            "High Card",
-            {Card(SPADE, 2), Card(DIAMOND, 5), Card(CLUB, 9), Card(HEART, 11), Card(CLUB, 13)}
-        }
-    };
-
-    // Evaluate each hand
-    std::vector<std::pair<HandRank, std::string>> evaluated;
-    for (const auto& [name, cards] : hands) {
-        HandRank rank = EvaluateHand(cards);
-        evaluated.emplace_back(rank, name);
-    }
-
-    // Sort by strength
-    std::sort(evaluated.begin(), evaluated.end());
-
-    std::cout << "Sorted hands from weakest to strongest:\n";
-    for (auto& [rank, name] : evaluated) {
-        std::cout << toHandString(rank.getHand()) << " => " << name << "\n";
-    }
-
-    // Assert Royal Flush is strongest
-    assert(evaluated.back().second == "Royal Flush");
-
-    // Assert High Card is weakest
-    assert(evaluated.front().second == "High Card");
-
-    std::cout << "All hand comparisons passed.\n";
 }
 */
 void setRotationsOnSprites(std::vector<std::vector<sf::Sprite>>& playerSprites , const int& cardWidth , const int& cardHeight , const int& spacing)

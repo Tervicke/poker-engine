@@ -6,6 +6,10 @@
 #include "handrank.h"
 #include "player.h"
 #include "game.h"
+
+#include <iomanip>
+#include <sstream>
+
 Game::Game(std::vector<Player> players)
     : deck(),
       players(players),
@@ -182,62 +186,74 @@ Deck Game::getDeck()
 {
     return deck;
 }
-void Game::monteCarloSimulate()
+std::pair<double,double> Game::monteCarloSimulate()
 {
+
     Deck copy = deck;
     auto cards = getCommunityCards();
+    //default win and loss chances 0% , 0%
+    int win = 0 , loss = 0;
+    int trials = 10000;
+
     //assume hands can already be made without needing to add more cards
-    if (getCommunityCards().size() == 5)
+    if (getCommunityCards().size()+2 >= 5)
     {
-        //cards.push_back(p1.getHoleCards().first);
-        //cards.push_back(p1.getHoleCards().second);
-        HandRank best = getBestHand(getAll5CardCombos(cards));
+        std::cout << "calculatng probablity...." << std::endl;
+        cards.push_back(players[0].getHoleCards().first);
+        cards.push_back(players[0].getHoleCards().second);
+        HandRank mainbest = getBestHand(getAll5CardCombos(cards));
 
         //remove the p1 hole cards
         cards.pop_back();
         cards.pop_back();
 
         //simulate
-        int win = 0 , loss = 0;
-        int trials = 100000;
 
         for (int i = 0; i < trials; ++i)
         {
+            HandRank oppbest(HIGH_CARD,{});
+            for (int p = 0 ; p < players.size() - 1 ; p++)
+            {
+                auto hole1= copy.drawCards(1)[0];
+                auto hole2 = copy.drawCards(1)[0];
 
-            auto hole1= copy.drawCards(1)[0];
-            auto hole2 = copy.drawCards(1)[0];
+                cards.push_back(hole1);
+                cards.push_back(hole2);
 
-            //insert the randomized
-            cards.push_back(hole1);
-            cards.push_back(hole2);
+                HandRank opp = getBestHand(getAll5CardCombos(cards));
+                if (p == 0) oppbest = opp;
+                else if (oppbest < opp)
+                {
+                    oppbest = opp;
+                }
 
-            HandRank oppbest = getBestHand(getAll5CardCombos(cards));
-            if ( oppbest < best)
+                cards.pop_back();
+                cards.pop_back();
+
+                //insert the random hole cards back into the deck
+                copy.insert(hole1);
+                copy.insert(hole2);
+            }
+
+            //check with the opponent best hand
+            if ( oppbest < mainbest)
             {
                 win++;
             }
-            if (best < oppbest)
+            if (mainbest < oppbest)
             {
                 loss++;
             }
-
-            //remove the 2 randomized cards from the total cards
-            cards.pop_back();
-            cards.pop_back();
-
-            //insert the random hole cards back into the deck
-            copy.insert(hole1);
-            copy.insert(hole2);
         }
-        std::cout << "SIMULATION STATS\n";
-        std::cout << "TRIALS: " << trials << '\n';
-        std::cout << "WIN: " << (100.0 * win / trials) << "%" << "\n";
-        std::cout << "LOSS: " << (100.0 * loss / trials) <<"%" << '\n';
+        std::cout <<" Done" << std::endl;
     }
+    double dwin = (win * 100.0) / trials;
+    double dloss = (loss * 100.0) / trials;
+    return {dwin , dloss};
 }
 std::pair<bool,std::string> Game::RevealNext()
 {
-    if (stop) return{false,""};
+    if (stop) return{true,""};
     if (!CardsDistributed)
     {
         DistributeHoleCards();
@@ -263,7 +279,7 @@ std::pair<bool,std::string> Game::RevealNext()
         stop = true;
         return {true,"RIVER"};
     }
-    return {false,""};
+    return {true,"END"};
 }
 std::vector<std::string> Game::GetFlopName() const
 {
@@ -290,4 +306,34 @@ std::vector<std::string> Game::GetPlayer1Cards()
     std::cout << cards.second.getName() << std::endl;
     std::vector<std::string> names = {players[0].getHoleCards().first .getName() , players[0].getHoleCards().second.getName()};
     return names;
+}
+std::pair<std::string,std::string> Game::getProbabilityPercentage()
+{
+    auto formatDouble = [](double x) -> std::string {
+        std::ostringstream oss;
+        oss << std::fixed << std::setprecision(2) << x;
+        return oss.str();
+    };
+    auto [win, loss] = monteCarloSimulate();
+    return {formatDouble(win), formatDouble(loss)};
+
+}
+std::vector<std::vector<std::string>> Game::GetAllplayersCards()
+{
+   std::vector<std::vector<std::string>> names;
+    for (auto player : players)
+    {
+        auto [card1 , card2] =  player.getHoleCards();
+        names.push_back( {card1.getName(),card2.getName()});
+    }
+    return names;
+}
+
+HandRank Game::getBestPlayerHand()
+{
+    auto cards = getCommunityCards();
+    auto [hole1 , hole2] = players[0].getHoleCards();
+    cards.push_back(hole1);
+    cards.push_back(hole2);
+    return getBestHand(getAll5CardCombos(cards));
 }
