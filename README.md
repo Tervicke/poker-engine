@@ -11,7 +11,8 @@ to build the binary
 
 to run the binary 
 ```
-    make run 
+    cd build
+    ./poker
 ```
 
 Press the `spacebar` to progress in the game.  
