@@ -18,5 +18,5 @@ Press the `spacebar` to progress in the game.
 
 # TODO
 - [ ] Enable calculation pre FLOP stage
-- [ ] Option to Restart Game
-- [ ] Add option to save Game  
+- [ ] Option to Restart engine
+- [ ] Add option to save and load custom game state.   
