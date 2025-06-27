@@ -45,7 +45,7 @@ const int WINDOW_HEIGHT = 768;
 
 sf::Font loadFont() {
     sf::Font font;
-    if (!font.loadFromFile("/home/tervicke/CLionProjects/poker/assets/arial.ttf")) {
+    if (!font.loadFromFile("assets/arial.ttf")) {
         std::cerr << "Could not load font!\n";
     }
     return font;
@@ -57,9 +57,9 @@ int main() {
 
     sf::Font font = loadFont();
 
-    std::string xmlfile = "/home/tervicke/CLionProjects/poker/assets/cards.xml";
-    std::string spritefile = "/home/tervicke/CLionProjects/poker/assets/cards.png";
-    std::string backFile = "/home/tervicke/CLionProjects/poker/assets/backs.png";
+    std::string xmlfile = "assets/cards.xml";
+    std::string spritefile = "assets/cards.png";
+    std::string backFile = "assets/backs.png";
     auto rects = LoadCardRects(xmlfile);
 
     sf::Texture cardTexture;
