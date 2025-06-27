@@ -15,3 +15,8 @@ to run the binary
 ```
 
 Press the `spacebar` to progress in the game.  
+
+# TODO
+[ ] Enable calculation pre FLOP stage 
+[ ] Option to Restart Game
+[ ] Add option to save Game  
