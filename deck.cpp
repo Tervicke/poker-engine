@@ -51,3 +51,8 @@ void Deck::insert(Card c)
 {
     cards.emplace_back(c);
 }
+void Deck::reset()
+{
+    cards.clear();
+    fillCards();
+}

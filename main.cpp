@@ -81,50 +81,16 @@ int main() {
         std::cerr << "Failed to load card texture\n";
         return 1;
     }
-    /*
-    std::vector<std::vector<std::string>> playerHands = {
-        {"BACK", "BACK"},       // Bottom (you)
-        {"BACK", "BACK"},    // Right (rotated)
-        {"BACK", "BACK"},      // Top
-        {"BACK", "BACK"}    // Left (rotated)
-    };
-    */
 
     std::vector<std::vector<sf::Sprite>> playerSprites(4);
-    /*
-    for (int i = 0; i < 4; ++i) {
-        for (const std::string& name : playerHands[i]) {
-            if (name == "BACK")
-            {
-                sf::Sprite sprite(backTexture, rects[name]);
-                sprite.setScale(0.7f, 0.7f);
-                playerSprites[i].push_back(sprite);
-            }else
-            {
-                sf::Sprite sprite(cardTexture, rects[name]);
-                sprite.setScale(0.7f, 0.7f);
-                playerSprites[i].push_back(sprite);
-            }
-        }
-    }
-    */
-
 
     float cardWidth = 140 * 0.7f;
     float cardHeight = 190 * 0.7f;
     float spacing = 20.f;
 
-    std::vector<std::string> communityCardNames = {
-//        "BACK", "BACK", "BACK", "BACK", "BACK"
-    };
+    std::vector<std::string> communityCardNames = {};
 
     std::vector<sf::Sprite> communityCards;
-
-    for (const std::string& name : communityCardNames) {
-        sf::Sprite sprite(cardTexture, rects[name]);
-        sprite.setScale(0.6f, 0.6f);
-        communityCards.push_back(sprite);
-    }
 
     float totalWidth = 5 * cardWidth + 4 * spacing;
     float startX = (WINDOW_WIDTH - totalWidth) / 2 + 20;
@@ -153,6 +119,18 @@ int main() {
             if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Space)
             {
                 g.stop = !g.stop;
+            }
+            if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::R)
+            {
+                std::cout << "resetting" << std::endl;
+                g.Reset();
+                communityCardNames.clear();
+                communityCards.clear();
+                playerSprites.clear();
+                playerSprites.resize(4);
+                auto [winpercent , losspercent] = g.getProbabilityPercentage();
+                winText.setString("WIN: "+winpercent+" %");
+                lossText.setString("LOSS: "+losspercent + " %");
             }
         }
         if (auto [revealed , type] = g.RevealNext(); revealed){

@@ -18,5 +18,6 @@ public:
     [[nodiscard]] size_t getCount() const ;
     std::vector<Card> drawCards(const int val );
     void insert(Card c);
+    void reset();
 };
 #endif //DECK_H

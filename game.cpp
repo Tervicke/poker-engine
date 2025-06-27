@@ -318,7 +318,7 @@ std::pair<std::string,std::string> Game::getProbabilityPercentage()
     return {formatDouble(win), formatDouble(loss)};
 
 }
-std::vector<std::vector<std::string>> Game::GetAllplayersCards()
+std::vector<std::vector<std::string>> Game::GetAllplayersCards() const
 {
    std::vector<std::vector<std::string>> names;
     for (auto player : players)
@@ -336,4 +336,12 @@ HandRank Game::getBestPlayerHand()
     cards.push_back(hole1);
     cards.push_back(hole2);
     return getBestHand(getAll5CardCombos(cards));
+}
+void Game::Reset()
+{
+    turnRevealed = false;
+    riverRevealed = false;
+    flopRevealed = false;
+    CardsDistributed = false;
+    deck.reset();
 }

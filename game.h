@@ -44,7 +44,8 @@ public:
     std::vector<std::string> GetPlayer1Cards();
     std::string GetRiverName() const;
     std::pair<std::string,std::string> getProbabilityPercentage();
-    std::vector<std::vector<std::string>> GetAllplayersCards();
+    std::vector<std::vector<std::string>> GetAllplayersCards() const;
     HandRank getBestPlayerHand();
+    void Reset();
 };
 #endif //GAME_H
