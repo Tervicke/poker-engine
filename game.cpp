@@ -7,6 +7,7 @@
 #include "player.h"
 #include "game.h"
 
+#include <cassert>
 #include <iomanip>
 #include <sstream>
 
@@ -222,9 +223,10 @@ std::pair<double,double> Game::monteCarloSimulate()
 
                 HandRank opp = getBestHand(getAll5CardCombos(cards));
                 if (p == 0) oppbest = opp;
-                else if (oppbest < opp)
+                else
                 {
-                    oppbest = opp;
+                    if (oppbest < opp)
+                        oppbest = opp;
                 }
 
                 cards.pop_back();
@@ -246,6 +248,72 @@ std::pair<double,double> Game::monteCarloSimulate()
             }
         }
         std::cout <<" Done" << std::endl;
+    }
+    else if (CardsDistributed)
+    {
+        std::cout << "comes here" << std::endl;
+
+        for (int i = 0  ; i < trials; i++)
+        {
+            std::cout << cards.size() << std::endl;
+            assert(cards.size() == 0);
+            //get the flop
+            auto flop = copy.drawCards(3);
+            cards.insert(cards.end(), flop.begin(), flop.end());
+
+            auto turn = copy.drawCards(1)[0];
+            auto river = copy.drawCards(1) [0];
+            cards.push_back(turn);
+            cards.push_back(river);
+
+            //push the player hole cards
+            cards.push_back(players[0].getHoleCards().first);
+            cards.push_back(players[0].getHoleCards().second);
+
+            HandRank mainbest = getBestHand(getAll5CardCombos(cards));
+            cards.pop_back();
+            cards.pop_back();
+
+            HandRank oppbest(HIGH_CARD,{});
+
+            for (int p = 0 ; p < players.size() - 1 ; p++)
+            {
+                auto hole1= copy.drawCards(1)[0];
+                auto hole2 = copy.drawCards(1)[0];
+
+                cards.push_back(hole1);
+                cards.push_back(hole2);
+
+                HandRank opp = getBestHand(getAll5CardCombos(cards));
+
+                if (p == 0) oppbest = opp;
+                else
+                {
+                    if (oppbest < opp)
+                    {
+                    oppbest = opp;
+                    }
+                }
+
+                cards.pop_back();
+                cards.pop_back();
+
+                //insert the random hole cards back into the deck
+                copy.insert(hole1);
+                copy.insert(hole2);
+            }
+            if ( oppbest < mainbest)
+            {
+                win++;
+            }else
+            {
+                loss++;
+            }
+            //clear the cards and reset the deck
+            cards.clear();
+            copy.reset();
+        }
+        std::cout << "ends here" << std::endl;
     }
     double dwin = (win * 100.0) / trials;
     double dloss = (loss * 100.0) / trials;
