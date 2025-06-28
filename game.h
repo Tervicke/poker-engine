@@ -35,7 +35,7 @@ public:
     std::vector<Card> getCommunityCards();
     std::vector<std::vector<Card>> getAll5CardCombos(const std::vector<Card>& allcards);
     HandRank getBestHand(std::vector<std::vector<Card>> combos);
-    void decideWinner();
+    std::pair<bool,std::string> decideWinner();
     Deck getDeck() ;
     std::pair<double,double> monteCarloSimulate();
     std::pair<bool,std::string> RevealNext();

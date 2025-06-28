@@ -21,8 +21,10 @@ class HandRank
 private:
     Hand hand;
     std::vector<Card> kickers;
+    std::vector<Card> allcards;
+
 public:
-    HandRank(Hand hand , std::vector<Card> kickers);
+    HandRank(Hand hand , std::vector<Card> kickers , std::vector<Card> allcards);
     Hand getHand();
     bool operator<(const HandRank& other) const;
     static void testHandRankComparison();

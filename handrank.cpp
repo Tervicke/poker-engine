@@ -9,8 +9,8 @@
 HandRank getBestHand(const std::vector<std::vector<Card>>& combos) ;
 std::vector<std::vector<Card>> getAll5CardCombos(const std::vector<Card>& cards);
 
-HandRank::HandRank(Hand hand , std::vector<Card> kickers)
-: hand(hand) , kickers(kickers)
+HandRank::HandRank(Hand hand , std::vector<Card> kickers , std::vector<Card> allcards)
+: hand(hand) , kickers(kickers) , allcards(allcards)
 {}
 Hand HandRank::getHand()
 {
@@ -21,20 +21,21 @@ bool HandRank::operator<(const HandRank& other) const
     if (hand != other.hand)
         return hand < other.hand;
 
-    auto getValuesDescending = [](const std::vector<Card>& cards) {
+    // Compare full best hand values in descending order
+    auto getValues = [](const std::vector<Card>& cards) {
         std::vector<int> values;
         for (const auto& c : cards)
             values.push_back(c.getValue());
-        std::sort(values.begin(), values.end(), std::greater<>());
         return values;
     };
 
-    std::vector<int> myvals = getValuesDescending(kickers);
-    std::vector<int> othervals = getValuesDescending(other.kickers);
-    return myvals < othervals;
+    std::vector<int> myVals = getValues(this->allcards);  // not just kickers!
+    std::vector<int> otherVals = getValues(other.allcards);
+    return myVals < otherVals; // lexicographic comparison
 }
 HandRank EvaluateHand(const std::vector<Card>& cards)
 {
+    std::vector<Card> copy = cards;
     std::vector<int> v(15, 0);
     for (auto& card : cards)
         v[card.getValue()]++;
@@ -72,9 +73,9 @@ HandRank EvaluateHand(const std::vector<Card>& cards)
 
     if (isflush && isstraight) {
         if (straightHigh == 14) {
-            return HandRank(ROYAL_FLUSH, {});
+            return {ROYAL_FLUSH, {},copy};
         }
-        return HandRank(STRAIGHT_FLUSH, {Card(suit, straightHigh)});
+        return HandRank(STRAIGHT_FLUSH, {Card(suit, straightHigh)},copy);
     }
 
     for (int i = 14; i >= 2; --i) {
@@ -85,7 +86,7 @@ HandRank EvaluateHand(const std::vector<Card>& cards)
                 else kicker.push_back(c);
             }
             kicker.resize(1);
-            return HandRank(FOUR_OF_A_KIND, kicker);
+            return {FOUR_OF_A_KIND, kicker,copy};
         }
     }
 
@@ -95,15 +96,15 @@ HandRank EvaluateHand(const std::vector<Card>& cards)
         else if (v[i] >= 2 && i != three) pair = std::max(pair, i);
     }
     if (three != -1 && pair != -1) {
-        return HandRank(FULL_HOUSE, {});
+        return {FULL_HOUSE, {},copy};
     }
 
     if (isflush) {
-        return HandRank(FLUSH, sortedCards);
+        return {FLUSH, sortedCards,copy};
     }
 
     if (isstraight) {
-        return HandRank(STRAIGHT, {Card(suit, straightHigh)});
+        return HandRank(STRAIGHT, {Card(suit, straightHigh)},copy);
     }
 
     if (three != -1) {
@@ -113,7 +114,7 @@ HandRank EvaluateHand(const std::vector<Card>& cards)
             else kickers.push_back(c);
         }
         kickers.resize(2);
-        return HandRank(THREE_OF_A_KIND, kickers);
+        return {THREE_OF_A_KIND, kickers,copy};
     }
 
     std::vector<int> pairs;
@@ -128,7 +129,7 @@ HandRank EvaluateHand(const std::vector<Card>& cards)
                 kickers.push_back(c);
         }
         kickers.resize(1);
-        return HandRank(TWO_PAIR, kickers);
+        return {TWO_PAIR, kickers,copy};
     }
 
     if (pairs.size() == 1) {
@@ -138,12 +139,12 @@ HandRank EvaluateHand(const std::vector<Card>& cards)
                 kickers.push_back(c);
         }
         kickers.resize(3);
-        return HandRank(ONE_PAIR, kickers);
+        return {ONE_PAIR, kickers,copy};
     }
 
     std::vector<Card> highCards = sortedCards;
     highCards.resize(5);
-    return HandRank(HIGH_CARD, highCards);
+    return {HIGH_CARD, highCards,copy};
 }
 std::string toHandString(const Hand hand ) {
     switch (hand) {
