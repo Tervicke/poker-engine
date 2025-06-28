@@ -105,6 +105,10 @@ int main() {
     lossText.setFillColor(sf::Color::White);
     lossText.setPosition(20, 60);
 
+    sf::Text handstrText("",font,25);
+    handstrText.setFillColor(sf::Color::White);
+    handstrText.setPosition(20, 100);
+
     //set probality
     auto [winpercent , losspercent] = g.getProbabilityPercentage();
     winText.setString("WIN: "+winpercent+" %");
@@ -131,6 +135,7 @@ int main() {
                 auto [winpercent , losspercent] = g.getProbabilityPercentage();
                 winText.setString("WIN: "+winpercent+" %");
                 lossText.setString("LOSS: "+losspercent + " %");
+                handstrText.setString("");
             }
         }
         if (auto [revealed , type] = g.RevealNext(); revealed){
@@ -214,6 +219,20 @@ int main() {
                 setRotationsOnSprites(playerSprites , cardWidth , cardHeight , spacing);
                 auto userhand = g.getBestPlayerHand();
                 std::cout << toHandString(userhand.getHand()) << std::endl;
+                auto [playerwon,handstr] = g.decideWinner();
+
+                if (playerwon)
+                {
+                    winText.setString("WIN: 100 %");
+                    lossText.setString("LOSS: 0 %");
+                }
+                else
+                {
+                    winText.setString("WIN: 0 %");
+                    lossText.setString("LOSS: 100 %");
+                }
+                handstrText.setString("Winning hand: "+handstr);
+                std::cout << toHandString(userhand.getHand()) << std::endl;
             }
             //update position for community cards
             for (int i = 0; i < communityCards.size(); ++i) {
@@ -226,6 +245,7 @@ int main() {
 
         window.draw(winText);
         window.draw(lossText);
+        window.draw(handstrText);
 
         for (const auto& hand : playerSprites)
         {

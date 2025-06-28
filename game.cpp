@@ -160,27 +160,42 @@ HandRank Game::getBestHand(std::vector<std::vector<Card>> combos)
     }
     return best;
 }
-void Game::decideWinner()
+
+//returns if the player won and also the best hand
+std::pair<bool,std::string> Game::decideWinner()
 {
-    auto comcards = getCommunityCards();
-    std::vector<Card> allcards = comcards;
-    //allcards.insert(allcards.end(), p1.getHoleCards().first);
-    //allcards.insert(allcards.end(), p1.getHoleCards().second);
-    HandRank bestp1  = getBestHand(getAll5CardCombos(allcards));
-    //remove the last 2 p1 cards
-    allcards.pop_back();
-    allcards.pop_back();
-    //allcards.push_back(p2.getHoleCards().first);
-    //allcards.push_back(p2.getHoleCards().second);
-    HandRank bestp2 = getBestHand(getAll5CardCombos(allcards));
-    if (bestp1 < bestp2)
+    auto cards = getCommunityCards();
+    cards.push_back(players[0].getHoleCards().first);
+    cards.push_back(players[0].getHoleCards().second);
+    HandRank mainbest = getBestHand(getAll5CardCombos(cards));
+    cards.pop_back();
+    cards.pop_back();
+    HandRank oppbest(HIGH_CARD , {},{});
+    for (int p = 1 ; p < players.size(); ++p)
     {
-        std::cout << "PLAYER 2 WINS\n";
+        cards.push_back(players[p].getHoleCards().first);
+        cards.push_back(players[p].getHoleCards().second);
+        auto opp = getBestHand(getAll5CardCombos(cards));
+        if (p == 1)
+        {
+            oppbest = opp;
+        }else
+        {
+            if (oppbest < opp)
+            {
+                oppbest = opp;
+            }
+        }
+        cards.pop_back();
+        cards.pop_back();
     }
-    if (bestp2 < bestp1)
+    if (oppbest < mainbest)
     {
-        std::cout << "PLAYER 1 WINS\n";
+        auto handstr = toHandString(mainbest.getHand());
+        return {true,handstr};
     }
+    auto handstr = toHandString(oppbest.getHand());
+    return {false,handstr};
 }
 
 Deck Game::getDeck()
@@ -241,7 +256,7 @@ std::pair<double,double> Game::monteCarloSimulate()
             cards.pop_back();
             cards.pop_back();
 
-            HandRank oppbest(HIGH_CARD,{});
+            HandRank oppbest(HIGH_CARD,{},{});
 
             for (int p = 0 ; p < players.size() - 1 ; p++)
             {
