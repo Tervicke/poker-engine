@@ -191,80 +191,47 @@ std::pair<double,double> Game::monteCarloSimulate()
 {
 
     Deck copy = deck;
-    auto cards = getCommunityCards();
+    std::vector<Card> cards;
     //default win and loss chances 0% , 0%
     int win = 0 , loss = 0;
     int trials = 10000;
-
-    //assume hands can already be made without needing to add more cards
-    if (getCommunityCards().size()+2 >= 5)
-    {
-        std::cout << "calculatng probablity...." << std::endl;
-        cards.push_back(players[0].getHoleCards().first);
-        cards.push_back(players[0].getHoleCards().second);
-        HandRank mainbest = getBestHand(getAll5CardCombos(cards));
-
-        //remove the p1 hole cards
-        cards.pop_back();
-        cards.pop_back();
-
-        //simulate
-
-        for (int i = 0; i < trials; ++i)
-        {
-            HandRank oppbest(HIGH_CARD,{});
-            for (int p = 0 ; p < players.size() - 1 ; p++)
-            {
-                auto hole1= copy.drawCards(1)[0];
-                auto hole2 = copy.drawCards(1)[0];
-
-                cards.push_back(hole1);
-                cards.push_back(hole2);
-
-                HandRank opp = getBestHand(getAll5CardCombos(cards));
-                if (p == 0) oppbest = opp;
-                else
-                {
-                    if (oppbest < opp)
-                        oppbest = opp;
-                }
-
-                cards.pop_back();
-                cards.pop_back();
-
-                //insert the random hole cards back into the deck
-                copy.insert(hole1);
-                copy.insert(hole2);
-            }
-
-            //check with the opponent best hand
-            if ( oppbest < mainbest)
-            {
-                win++;
-            }
-            if (mainbest < oppbest)
-            {
-                loss++;
-            }
-        }
-        std::cout <<" Done" << std::endl;
-    }
-    else if (CardsDistributed)
+    //if the hole cards are distributed.
+    if (CardsDistributed)
     {
         std::cout << "comes here" << std::endl;
-
         for (int i = 0  ; i < trials; i++)
         {
             std::cout << cards.size() << std::endl;
             assert(cards.size() == 0);
             //get the flop
-            auto flop = copy.drawCards(3);
-            cards.insert(cards.end(), flop.begin(), flop.end());
+            //simulate the turn if not revealed
+            if (!flopRevealed)
+            {
+                auto simulated_flop = copy.drawCards(3);
+                cards.insert(cards.end(), simulated_flop.begin(), simulated_flop.end());
+            }else
+            {
+                cards.insert(cards.end(),flop.begin(),flop.end());
+            }
 
-            auto turn = copy.drawCards(1)[0];
-            auto river = copy.drawCards(1) [0];
-            cards.push_back(turn);
-            cards.push_back(river);
+            if (!turnRevealed)
+            {
+                auto simulated_turn = copy.drawCards(1)[0];
+                cards.push_back(simulated_turn);
+            }else
+            {
+                cards.push_back(turn);
+            }
+
+            if (!riverRevealed)
+            {
+
+                auto simulated_river = copy.drawCards(1) [0];
+                cards.push_back(simulated_river);
+            }else
+            {
+                cards.push_back(river);
+            }
 
             //push the player hole cards
             cards.push_back(players[0].getHoleCards().first);
@@ -291,16 +258,9 @@ std::pair<double,double> Game::monteCarloSimulate()
                 {
                     if (oppbest < opp)
                     {
-                    oppbest = opp;
+                        oppbest = opp;
                     }
                 }
-
-                cards.pop_back();
-                cards.pop_back();
-
-                //insert the random hole cards back into the deck
-                copy.insert(hole1);
-                copy.insert(hole2);
             }
             if ( oppbest < mainbest)
             {
