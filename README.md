@@ -18,6 +18,6 @@ to run the binary
 Press the `spacebar` to progress in the game.  
 
 # TODO
-- [ ] Enable calculation pre FLOP stage
-- [ ] Option to Restart engine
+- [x] Enable calculation pre FLOP stage
+- [x] Option to Restart engine
 - [ ] Add option to save and load custom game state.   
